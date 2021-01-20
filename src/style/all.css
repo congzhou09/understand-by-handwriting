@@ -1,0 +1,17 @@
+body {
+    margin: 0;
+}
+
+@keyframes rotation {
+    0%{
+        transform: rotateZ(0deg);
+    }
+    100%{
+        transform: rotateZ(360deg);
+    }
+}
+
+.test{
+    display: flex;
+    animation: rotation 2s infinite;
+}
