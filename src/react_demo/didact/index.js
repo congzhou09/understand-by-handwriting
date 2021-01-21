@@ -92,19 +92,17 @@ function updateDomProperties(dom, prevProps, nextProps) {
       dom.addEventListener(eventType, nextProps[name]);
     });
 
-  // Remove attributes
-  Object.keys(prevProps)
-    .filter(isAttribute)
-    .forEach((name) => {
-      dom[name] = null;
-    });
+  // Update attributes
+  const prevAttributes = Object.keys(prevProps).filter(isAttribute);
+  const nextAttributes = Object.keys(nextProps).filter(isAttribute);
+  const attributeCount = Math.max(prevAttributes.length, nextAttributes.length);
 
-  // Set attributes
-  Object.keys(nextProps)
-    .filter(isAttribute)
-    .forEach((name) => {
-      dom[name] = nextProps[name];
-    });
+  for (let i = 0; i < attributeCount; i++) {
+    if (prevProps[prevAttributes[i]] !== nextProps[nextAttributes[i]]) {
+      dom[prevAttributes[i]] = null;
+      dom[nextAttributes[i]] = nextProps[nextAttributes[i]];
+    }
+  }
 }
 
 function createElement(type, config, ...args) {
