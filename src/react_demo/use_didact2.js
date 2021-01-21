@@ -1,4 +1,5 @@
 import Didact from "./didact";
+import "./style/use_didact2.css";
 
 /** @jsx Didact.createElement */
 const rootDom = document.getElementById("app");
