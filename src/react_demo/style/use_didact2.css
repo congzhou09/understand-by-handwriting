@@ -26,6 +26,6 @@ b {
 }
 
 button:active b {
-	-webkit-transform: scale(1.3);
-	transform: scale(1.3);
+	-webkit-transform: scale(1.5);
+	transform: scale(1.5);
 }
