@@ -1,18 +1,20 @@
-// import React from 'react';
-// import ReactDom from 'react-dom';
+import "../tools/bleeding-thread";
 
-// using({
-//   createElement: React.createElement,
-//   Component: React.Component,
-//   render: ReactDom.render
-// });
+import React from "react";
+import ReactDom from "react-dom";
 
-import Didact from './didact/index.js';
 using({
-  createElement: Didact.createElement,
-  Component: Didact.Component,
-  render: Didact.render
+  createElement: React.createElement,
+  Component: React.Component,
+  render: ReactDom.render,
 });
+
+// import Didact from './didact/index.js';
+// using({
+//   createElement: Didact.createElement,
+//   Component: Didact.Component,
+//   render: Didact.render
+// });
 
 /* @jsx Reactish.createElement*/
 function using(Reactish) {
@@ -54,13 +56,10 @@ function using(Reactish) {
       const { elapsed, size, delay, period } = this.state;
       const text = elapsed % 10;
       const array = Array(size).fill();
-      const row = array.map((x) => <Cell {...{ text, delay }} />);
+      const row = array.map((x, key) => <Cell {...{ text, delay, key }} />);
       const rows = array.map((x, key) => <tr key={key}>{row}</tr>);
       return (
-        <div style={{ display: "flex" }}>
-          <table>
-            <tbody>{rows}</tbody>
-          </table>
+        <div>
           <div>
             <p>
               The table refreshes every <b>{Math.round(period)}</b>ms
@@ -91,12 +90,15 @@ function using(Reactish) {
               for <b>{(delay * size * size).toFixed(2)}</b>ms
             </p>
           </div>
+          <table>
+            <tbody>{rows}</tbody>
+          </table>
         </div>
       );
     }
   }
 
-  Reactish.render(<Demo />, document.querySelector('#app'));
+  Reactish.render(<Demo />, document.querySelector("#app"));
 }
 
 function wait(ms) {
