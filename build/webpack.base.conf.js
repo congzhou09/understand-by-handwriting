@@ -13,6 +13,7 @@ module.exports = {
   context: resolve("."),
   entry: {
     app: "./src/main.js",
+    fiberFeature: "./src/react_demo/fiber_feature.js"
   },
   output: {
     publicPath: baseConfig.urlPrefix,
@@ -48,7 +49,7 @@ module.exports = {
           loader: "babel-loader",
           options: {
             cacheDirectory: resolve("babel-cache"),
-            cacheCompression: false
+            cacheCompression: false,
           },
         },
       },
@@ -106,6 +107,13 @@ module.exports = {
     new HtmlWebpackPlugin({
       filename: "index.html",
       template: "index.html",
+      excludeChunks: ["fiberFeature"],
+      inject: "body",
+    }),
+    new HtmlWebpackPlugin({
+      filename: "fiber_feature.html",
+      template: "template/fiber_feature.html",
+      chunks: ["runtime", "vendor", "common", "fiberFeature"],
       inject: "body",
     }),
     //webpack-dev-server在内存中虚拟一套目录，也需要用到CopyWebpackPlugin，否则当publicPath非默认值时会导致某些static下的资源在dev模式下访问不到
