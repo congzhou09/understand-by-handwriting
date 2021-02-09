@@ -17,6 +17,7 @@ function reconcile(container, prevInstance, element) {
     return null;
   } else if (prevInstance.element.type === element.type) {
     if (typeof element.type === "string") {
+      // html element: update prevInstance
       updateDomProperties(
         prevInstance.dom,
         prevInstance.element.props,
@@ -27,7 +28,7 @@ function reconcile(container, prevInstance, element) {
       prevInstance.element = element;
       return prevInstance;
     } else {
-      // Component  element.type==="function"
+      // Component(element.type==="function"): reconcile with newElement generated from render() function
       prevInstance.publicInstance.props = element.props;
       const newComponentElement = prevInstance.publicInstance.render();
       const newComponentInstance = reconcile(
@@ -35,10 +36,16 @@ function reconcile(container, prevInstance, element) {
         prevInstance.componentInstance,
         newComponentElement
       );
-      prevInstance.dom = newComponentInstance.dom;
-      prevInstance.componentInstance = newComponentInstance;
-      prevInstance.element = element;
-      return prevInstance;
+      // prevInstance.dom = newComponentInstance.dom;
+      // prevInstance.componentInstance = newComponentInstance;
+      // prevInstance.element = element;
+      // return prevInstance;
+      return {
+        dom: newComponentInstance.dom,
+        element,
+        componentInstance: newComponentInstance,
+        publicInstance: prevInstance.publicInstance,
+      };
     }
   } else {
     const newInstance = instantiate(element);
@@ -48,22 +55,23 @@ function reconcile(container, prevInstance, element) {
 }
 
 function reconcileChildren(prevInstance, element) {
-  const newChildren = element.props.children || [];
+  const newChildrenElement = element.props.children || [];
+  const prevChildrenInstance = prevInstance.childInstances || [];
   const count = Math.max(
-    prevInstance.childInstances.length,
-    newChildren.length
+    prevChildrenInstance.length,
+    newChildrenElement.length
   );
-  const newInstances = [];
+  const newChildrenInstance = [];
   for (let i = 0; i < count; i++) {
-    newInstances.push(
+    newChildrenInstance.push(
       reconcile(
         prevInstance.dom,
-        prevInstance.childInstances[i],
-        newChildren[i]
+        prevChildrenInstance[i],
+        newChildrenElement[i]
       )
     );
   }
-  return newInstances.filter((instance) => instance !== null);
+  return newChildrenInstance.filter((instance) => instance !== null);
 }
 
 function instantiate(element) {
@@ -125,21 +133,29 @@ function updateDomProperties(dom, prevProps, nextProps) {
   const nextAttributes = Object.keys(nextProps).filter(isAttribute);
   const attributeCount = Math.max(prevAttributes.length, nextAttributes.length);
   for (let i = 0; i < attributeCount; i++) {
-    if (prevProps[prevAttributes[i]] !== nextProps[nextAttributes[i]]) {
-      dom[prevAttributes[i]] = null;
-      dom[nextAttributes[i]] = nextProps[nextAttributes[i]];
+    if (
+      prevAttributes[i] !== nextAttributes[i] ||
+      prevProps[prevAttributes[i]] !== nextProps[nextAttributes[i]]
+    ) {
+      prevAttributes[i] !== undefined && (dom[prevAttributes[i]] = null);
+      nextAttributes[i] !== undefined &&
+        (dom[nextAttributes[i]] = nextProps[nextAttributes[i]]);
     }
   }
 }
 
-function createElement(type, config, ...args) {
-  const props = Object.assign({}, config);
-  const hasChildren = args.length > 0;
-  const rawChildren = hasChildren ? [].concat(...args) : [];
-  props.children = rawChildren
-    .filter((c) => c != null && c !== false)
-    .map((c) => (c instanceof Object ? c : createTextElement(c)));
-  return { type, props };
+function createElement(type, config, ...rawChildren) {
+  return {
+    type,
+    props: {
+      ...config,
+      children: [].concat(...rawChildren) //存在的[Array(n)]情况
+        .filter((child) => child != null && child !== false)
+        .map((child) =>
+          child instanceof Object ? child : createTextElement(child)
+        ),
+    },
+  };
 }
 
 function createTextElement(value) {
