@@ -1,10 +1,45 @@
 const TEXT_ELEMENT = "TEXT ELEMENT";
 
-let rootInstance = null;
+// let rootInstance = null;
 function render(element, parentDom) {
-  const prevInstance = rootInstance;
-  rootInstance = reconcile(parentDom, prevInstance, element);
+  nextWorkUnit = {
+    dom: parentDom,
+    props: {
+      children: [element]
+    }
+  }
+  // const prevInstance = rootInstance;
+  // rootInstance = reconcile(parentDom, prevInstance, element);
 }
+
+let nextWorkUnit = null;
+function workLoop(idleDeadlineObj) {
+  let shouldYield = false;
+  while (nextWorkUnit && !shouldYield) {
+    nextWorkUnit = performWorkUnit(nextWorkUnit);
+    shouldYield = idleDeadlineObj.timeRemaining() < 1;
+  }
+  requestIdleCallback(workLoop);
+}
+
+function performWorkUnit(fiber) {
+  if(!fiber.dom){
+    fiber.dom = createDom(fiber);
+  }
+}
+
+/**
+ * fiber is used to organize the units of work, each unit is
+ * called a fiber and is relevant to a element node, and all
+ * units of work form a fiber tree.
+ *
+ * For the convenience of getting the next unit of work, a
+ * fiber stores its parent fiber, its first child fiber, and
+ * its sibling fiber. Sequence of getting next unit is: first
+ * child, sibling, child's parent sibling.
+ * **/
+
+requestIdleCallback(workLoop);
 
 function reconcile(container, prevInstance, element) {
   // Append or replace dom
@@ -106,6 +141,19 @@ function instantiate(element) {
     });
     return { dom, element, childInstances };
   }
+}
+
+function createDom(fiber) {
+  const { type, props } = element;
+  // Create DOM element
+  const isTextElement = type === TEXT_ELEMENT;
+  const dom = isTextElement
+    ? document.createTextNode("")
+    : document.createElement(type);
+
+  updateDomProperties(dom, [], props);
+
+  return dom;
 }
 
 function updateDomProperties(dom, prevProps, nextProps) {
