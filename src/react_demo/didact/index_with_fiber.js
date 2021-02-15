@@ -23,9 +23,51 @@ function workLoop(idleDeadlineObj) {
 }
 
 function performWorkUnit(fiber) {
+  // create current fiber dom
   if(!fiber.dom){
     fiber.dom = createDom(fiber);
   }
+
+  if(fiber.parent){
+    fiber.parent.dom.appendChild(fiber.dom);
+  }
+
+  // create children fiber
+  const elements = fiber.props.children;
+  let prevFiber = null;
+  for(let index = 0;index < elements.length;index++){
+    const element = elements[index];
+
+    const oneFiber = {
+      dom: null,
+      type: element.type,
+      props: element.props,
+      parent: fiber
+    }
+    
+    if(index===0){
+      fiber.child = oneFiber;
+    }else{
+      prevFiber.sibling = oneFiber;
+    }
+    prevFiber = oneFiber;
+  }
+
+  // return next work unit fiber
+  if(fiber.child){
+    return fiber.child;
+  }
+
+  let nextFiber = fiber;
+
+  while(nextFiber){
+    if(nextFiber.sibling){
+      return nextFiber.sibling;
+    }
+    nextFiber = nextFiber.parent;
+  }
+
+  return null;
 }
 
 /**
@@ -144,7 +186,7 @@ function instantiate(element) {
 }
 
 function createDom(fiber) {
-  const { type, props } = element;
+  const { type, props } = fiber;
   // Create DOM element
   const isTextElement = type === TEXT_ELEMENT;
   const dom = isTextElement
