@@ -1,17 +1,18 @@
 const TEXT_ELEMENT = "TEXT ELEMENT";
 
-// let rootInstance = null;
 function render(element, parentDom) {
-  nextWorkUnit = {
+  rootInstance = {
     dom: parentDom,
     props: {
-      children: [element]
-    }
-  }
+      children: [element],
+    },
+  };
+  nextWorkUnit = rootInstance;
   // const prevInstance = rootInstance;
   // rootInstance = reconcile(parentDom, prevInstance, element);
 }
 
+let rootInstance = null; // work-in-progress root
 let nextWorkUnit = null;
 function workLoop(idleDeadlineObj) {
   let shouldYield = false;
@@ -19,55 +20,76 @@ function workLoop(idleDeadlineObj) {
     nextWorkUnit = performWorkUnit(nextWorkUnit);
     shouldYield = idleDeadlineObj.timeRemaining() < 1;
   }
+  if (!nextWorkUnit && rootInstance) {
+    commitRootInstance(); // commit rootInstance to the real DOM
+  }
+
   requestIdleCallback(workLoop);
 }
 
 function performWorkUnit(fiber) {
   // create current fiber dom
-  if(!fiber.dom){
+  if (!fiber.dom) {
     fiber.dom = createDom(fiber);
-  }
-
-  if(fiber.parent){
-    fiber.parent.dom.appendChild(fiber.dom);
   }
 
   // create children fiber
   const elements = fiber.props.children;
   let prevFiber = null;
-  for(let index = 0;index < elements.length;index++){
+  for (let index = 0; index < elements.length; index++) {
     const element = elements[index];
 
     const oneFiber = {
       dom: null,
       type: element.type,
       props: element.props,
-      parent: fiber
-    }
-    
-    if(index===0){
+      parent: fiber,
+    };
+
+    if (index === 0) {
       fiber.child = oneFiber;
-    }else{
+    } else {
       prevFiber.sibling = oneFiber;
     }
     prevFiber = oneFiber;
   }
 
   // return next work unit fiber
-  if(fiber.child){
+  if (fiber.child) {
     return fiber.child;
   }
 
   let nextFiber = fiber;
 
-  while(nextFiber){
-    if(nextFiber.sibling){
+  while (nextFiber) {
+    if (nextFiber.sibling) {
       return nextFiber.sibling;
     }
     nextFiber = nextFiber.parent;
   }
 
   return null;
+}
+
+function commitRootInstance() {
+  performCommit(rootInstance.child);
+  
+  rootInstance = null;
+}
+
+/**
+ * in the sequence of deep-first:
+ * 1.child.child.child...
+ * 2.sibling.sibling.sibling...
+ * 3.parent.sibling.sibling.sibling...
+ * **/
+function performCommit(fiber) {
+  if(!fiber){
+    return;
+  }
+  fiber.parent.dom.appendChild(fiber.dom);
+  performCommit(fiber.child);
+  performCommit(fiber.sibling);
 }
 
 /**
@@ -239,7 +261,8 @@ function createElement(type, config, ...rawChildren) {
     type,
     props: {
       ...config,
-      children: [].concat(...rawChildren) //存在的[Array(n)]情况
+      children: []
+        .concat(...rawChildren) //存在的[Array(n)]情况
         .filter((child) => child != null && child !== false)
         .map((child) =>
           child instanceof Object ? child : createTextElement(child)

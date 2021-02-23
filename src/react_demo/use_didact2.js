@@ -1,4 +1,4 @@
-import Didact from "./didact";
+import Didact from "./didact/index_with_fiber.js";
 import "./style/use_didact2.css";
 
 /** @jsx Didact.createElement */
