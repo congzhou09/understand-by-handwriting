@@ -28,18 +28,21 @@ function render(element, parentDom) {
   rootFiber = {
     dom: parentDom, // rootFiber["dom"] is already existed
     props: {
-      children: [element]
+      children: [element],
     },
-    alternate: prevRootFiber
+    alternate: prevRootFiber,
   };
   nextWorkUnit = rootFiber;
-  // rootInstance = reconcile(parentDom, prevInstance, element);
 }
 
 let rootFiber = null; // work-in-progress root
 let prevRootFiber = null;
 let nextWorkUnit = null;
-let deletions = []; // fibers to be deleted when commit
+let deletions = new Set(); /**
+ *  "deletions" stores fibers to be deleted when commit, use Set to replace Array because
+ *  when debugging in a situation of render() being invoked continuously, "nextWorkUnit" is always not null 
+ *  and commitRootFiber() will not be invoked, "DELETE" condition in reconcile() may always be matched.
+**/
 function workLoop(idleDeadlineObj) {
   let shouldYield = false;
   while (nextWorkUnit && !shouldYield) {
@@ -81,7 +84,15 @@ function performWorkUnit(fiber) {
 }
 
 function commitRootFiber() {
-  // deletions.forEach(performCommit);
+  /**
+   * delection fibers will not be included in new root fiber traverse
+   * **/
+  [...deletions].forEach((oneFiber) => {
+    performCommit(oneFiber);
+    oneFiber = null;
+  }); 
+  deletions.clear();
+  
   performCommit(rootFiber.child);
   prevRootFiber = rootFiber;
   rootFiber = null;
@@ -145,12 +156,12 @@ function reconcile(parentFiber, elements) {
         props: element.props,
         parent: parentFiber,
         alternate: null,
-        effectTag: "ADD"
+        effectTag: "ADD",
       };
     } else if (element == null) {
       // delete
       prevFiber.effectTag = "DELETE";
-      deletions.push(prevFiber);
+      deletions.add(prevFiber);
     } else if (prevFiber.type === element.type) {
       // update
       oneFiber = {
@@ -159,7 +170,7 @@ function reconcile(parentFiber, elements) {
         props: element.props,
         parent: parentFiber,
         alternate: prevFiber,
-        effectTag: "UPDATE"
+        effectTag: "UPDATE",
       };
     } else {
       // replace
@@ -169,7 +180,7 @@ function reconcile(parentFiber, elements) {
         props: element.props,
         parent: parentFiber,
         alternate: prevFiber,
-        effectTag: "REPLACE"
+        effectTag: "REPLACE",
       };
     }
 
@@ -204,13 +215,13 @@ function createDom(fiber) {
 }
 
 function updateDomProperties(dom, prevProps, nextProps) {
-  const isEvent = name => name.startsWith("on");
-  const isAttribute = name => !isEvent(name) && name != "children";
+  const isEvent = (name) => name.startsWith("on");
+  const isAttribute = (name) => !isEvent(name) && name != "children";
 
   // Remove event listeners
   Object.keys(prevProps)
     .filter(isEvent)
-    .forEach(name => {
+    .forEach((name) => {
       const eventType = name.toLowerCase().substring(2);
       dom.removeEventListener(eventType, prevProps[name]);
     });
@@ -218,7 +229,7 @@ function updateDomProperties(dom, prevProps, nextProps) {
   // Add event listeners
   Object.keys(nextProps)
     .filter(isEvent)
-    .forEach(name => {
+    .forEach((name) => {
       const eventType = name.toLowerCase().substring(2);
       dom.addEventListener(eventType, nextProps[name]);
     });
@@ -246,11 +257,11 @@ function createElement(type, config, ...rawChildren) {
       ...config,
       children: []
         .concat(...rawChildren) //存在的[Array(n)]情况
-        .filter(child => child != null && child !== false)
-        .map(child =>
+        .filter((child) => child != null && child !== false)
+        .map((child) =>
           child instanceof Object ? child : createTextElement(child)
-        )
-    }
+        ),
+    },
   };
 }
 
@@ -284,5 +295,5 @@ function createPublicInstance(element, internalInstance) {
 export default {
   render,
   createElement,
-  Component
+  Component,
 };
