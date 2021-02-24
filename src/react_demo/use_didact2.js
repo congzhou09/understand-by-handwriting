@@ -1,3 +1,4 @@
+// import Didact from "./didact";
 import Didact from "./didact/index_with_fiber.js";
 import "./style/use_didact2.css";
 
@@ -14,7 +15,7 @@ function getOneGame(gameName, likesIndex) {
   }
   return (
     <li>
-      <button onClick={like} style="width: 50px;">
+      <button onClick={like} style="width: 80px;">
         {likes[likesIndex]}
         <b>❤️</b>
       </button>

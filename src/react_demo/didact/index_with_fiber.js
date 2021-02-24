@@ -28,9 +28,9 @@ function render(element, parentDom) {
   rootFiber = {
     dom: parentDom, // rootFiber["dom"] is already existed
     props: {
-      children: [element],
+      children: [element]
     },
-    alternate: prevRootFiber,
+    alternate: prevRootFiber
   };
   nextWorkUnit = rootFiber;
 }
@@ -38,33 +38,51 @@ function render(element, parentDom) {
 let rootFiber = null; // work-in-progress root
 let prevRootFiber = null;
 let nextWorkUnit = null;
-let deletions = new Set(); /**
+let deletions = new Set();
+/**
  *  "deletions" stores fibers to be deleted when commit, use Set to replace Array because
- *  when debugging in a situation of render() being invoked continuously, "nextWorkUnit" is always not null 
+ *  when debugging in a situation of render() being invoked continuously, "nextWorkUnit" is always not null
  *  and commitRootFiber() will not be invoked, "DELETE" condition in reconcile() may always be matched.
-**/
+ **/
+let updateFiber = null;
 function workLoop(idleDeadlineObj) {
   let shouldYield = false;
   while (nextWorkUnit && !shouldYield) {
     nextWorkUnit = performWorkUnit(nextWorkUnit);
     shouldYield = idleDeadlineObj.timeRemaining() < 1;
   }
-  if (!nextWorkUnit && rootFiber) {
-    commitRootFiber(); // commit rootFiber to the real DOM
+  if (!nextWorkUnit) {
+    if (rootFiber) {
+      commitRootFiber(); // commit rootFiber to the real DOM
+    }
+
+    if (updateFiber) {
+      performCommit(updateFiber);
+      updateFiber = null;
+    }
   }
 
   requestIdleCallback(workLoop);
 }
 
 function performWorkUnit(fiber) {
-  // create current fiber dom
-  if (!fiber.dom) {
-    fiber.dom = createDom(fiber);
-  }
+  const isComponent = typeof fiber.type === "function";
+  if (isComponent) {
+    if (!fiber.component) {
+      fiber.component = createComponentInstance(fiber);
+    }
+    const elements = [fiber.component.render()];
+    reconcile(fiber, elements);
+  } else {
+    // create current fiber dom
+    if (!fiber.dom) {
+      fiber.dom = createDom(fiber);
+    }
 
-  // reconcile this fiber's all children in the first depth
-  const elements = fiber.props.children;
-  reconcile(fiber, elements);
+    // reconcile this fiber's all children in the first depth
+    const elements = fiber.props.children;
+    reconcile(fiber, elements);
+  }
 
   // return next work unit fiber
   if (fiber.child) {
@@ -87,12 +105,12 @@ function commitRootFiber() {
   /**
    * delection fibers will not be included in new root fiber traverse
    * **/
-  [...deletions].forEach((oneFiber) => {
+  [...deletions].forEach(oneFiber => {
     performCommit(oneFiber);
     oneFiber = null;
-  }); 
+  });
   deletions.clear();
-  
+
   performCommit(rootFiber.child);
   prevRootFiber = rootFiber;
   rootFiber = null;
@@ -108,17 +126,22 @@ function performCommit(fiber) {
   if (!fiber) {
     return;
   }
-  const parentDom = fiber.parent.dom;
+  let parentForDom = fiber.parent;
+  while (parentForDom && parentForDom.dom == null) {
+    parentForDom = parentForDom.parent;
+  }
+  let parentDom = parentForDom.dom;
   if (fiber.effectTag === "ADD" && fiber.dom != null) {
     parentDom.appendChild(fiber.dom);
   } else if (fiber.effectTag === "DELETE") {
     parentDom.removeChild(fiber.dom);
   } else if (fiber.effectTag === "UPDATE") {
     updateDomProperties(fiber.dom, fiber.alternate.props, fiber.props);
-  } else {
-    // fiber.effectTag === "REPLACE"
+  } else if (fiber.effectTag === "REPLACE") {
     parentDom.replaceChild(fiber.dom, fiber.alternate.dom);
   }
+
+  fiber.alternate = fiber;
 
   performCommit(fiber.child);
   performCommit(fiber.sibling);
@@ -156,7 +179,7 @@ function reconcile(parentFiber, elements) {
         props: element.props,
         parent: parentFiber,
         alternate: null,
-        effectTag: "ADD",
+        effectTag: "ADD"
       };
     } else if (element == null) {
       // delete
@@ -170,7 +193,7 @@ function reconcile(parentFiber, elements) {
         props: element.props,
         parent: parentFiber,
         alternate: prevFiber,
-        effectTag: "UPDATE",
+        effectTag: "UPDATE"
       };
     } else {
       // replace
@@ -180,7 +203,7 @@ function reconcile(parentFiber, elements) {
         props: element.props,
         parent: parentFiber,
         alternate: prevFiber,
-        effectTag: "REPLACE",
+        effectTag: "REPLACE"
       };
     }
 
@@ -215,13 +238,13 @@ function createDom(fiber) {
 }
 
 function updateDomProperties(dom, prevProps, nextProps) {
-  const isEvent = (name) => name.startsWith("on");
-  const isAttribute = (name) => !isEvent(name) && name != "children";
+  const isEvent = name => name.startsWith("on");
+  const isAttribute = name => !isEvent(name) && name != "children";
 
   // Remove event listeners
   Object.keys(prevProps)
     .filter(isEvent)
-    .forEach((name) => {
+    .forEach(name => {
       const eventType = name.toLowerCase().substring(2);
       dom.removeEventListener(eventType, prevProps[name]);
     });
@@ -229,7 +252,7 @@ function updateDomProperties(dom, prevProps, nextProps) {
   // Add event listeners
   Object.keys(nextProps)
     .filter(isEvent)
-    .forEach((name) => {
+    .forEach(name => {
       const eventType = name.toLowerCase().substring(2);
       dom.addEventListener(eventType, nextProps[name]);
     });
@@ -257,11 +280,11 @@ function createElement(type, config, ...rawChildren) {
       ...config,
       children: []
         .concat(...rawChildren) //存在的[Array(n)]情况
-        .filter((child) => child != null && child !== false)
-        .map((child) =>
+        .filter(child => child != null && child !== false)
+        .map(child =>
           child instanceof Object ? child : createTextElement(child)
-        ),
-    },
+        )
+    }
   };
 }
 
@@ -276,24 +299,20 @@ class Component {
   }
   setState(partialState) {
     this.state = Object.assign({}, this.state, partialState);
-    updateInstance(this._internalInstance);
+    nextWorkUnit = this._fiber;
+    updateFiber = this._fiber;
   }
 }
 
-function updateInstance(internalInstance) {
-  const parentDom = internalInstance.dom.parentNode;
-  reconcile(parentDom, internalInstance, internalInstance.element);
-}
-
-function createPublicInstance(element, internalInstance) {
-  const { type, props } = element;
-  const publicInstance = new type(props);
-  publicInstance._internalInstance = internalInstance;
-  return publicInstance;
+function createComponentInstance(fiber) {
+  const { type, props } = fiber;
+  const componentInstance = new type(props);
+  componentInstance._fiber = fiber;
+  return componentInstance;
 }
 
 export default {
   render,
   createElement,
-  Component,
+  Component
 };

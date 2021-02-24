@@ -1,4 +1,5 @@
-import Didact from "./didact";
+// import Didact from "./didact";
+import Didact from "./didact/index_with_fiber";
 import "./style/use_didact2.css";
 
 /** @jsx Didact.createElement */
@@ -42,7 +43,7 @@ class Game extends Didact.Component {
   render() {
     return (
       <li>
-        <button onClick={this.likeFun} style="width: 50px;">
+        <button onClick={this.likeFun} style="width: 80px;">
           {this.state.likes}
           <b>❤️</b>
         </button>
