@@ -1,4 +1,5 @@
-import Didact from "./didact";
+// import Didact from "./didact";
+import Didact from "./didact/index_with_fiber.js";
 
 /** @jsx Didact.createElement */
 const rootDom = document.getElementById("app");
