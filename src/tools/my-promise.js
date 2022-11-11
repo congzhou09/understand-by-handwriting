@@ -4,7 +4,7 @@ const PROMISE_STATUS = {
   rejected: "rejected",
 };
 
-const MyPromise = function (promiseFun) {
+function MyPromise(promiseFun) {
   this.status = PROMISE_STATUS.pending;
   this.resolvedFun = null;
   this.rejectedFun = null;
@@ -38,18 +38,27 @@ const MyPromise = function (promiseFun) {
   }
 
   promiseFun && promiseFun(resolve.bind(this), reject.bind(this));
-};
+}
 
-MyPromise.prototype.then = function (resolvedFun) {
+MyPromise.prototype.then = function (resolvedFun, rejectedFun) {
   const _this = this;
   return new MyPromise(function (resolve, reject) {
     const finalResolvedFun = function () {
-      resolvedFun && resolve(resolvedFun(this.resolvedRet));
+      resolvedFun && resolve(resolvedFun(_this.resolvedRet));
+    };
+    const finalRejectedFun = function () {
+      if (rejectedFun) {
+        reject(rejectedFun(_this.rejectedRet));
+      } else {
+        reject(_this.rejectedRet);
+      }
     };
     try {
       // 调then的时候可能还没调过resolve
       if (_this.status === PROMISE_STATUS.fulfilled) {
         finalResolvedFun();
+      } else if (_this.status === PROMISE_STATUS.rejected) {
+        finalRejectedFun();
       } else {
         _this.resolvedFun = finalResolvedFun;
       }
@@ -65,6 +74,46 @@ MyPromise.prototype.catch = function (rejectedFun) {
   } else {
     this.rejectedFun = rejectedFun;
   }
+};
+
+MyPromise.resolve = function (value) {
+  return new MyPromise((resolve) => {
+    resolve(value);
+  });
+};
+
+MyPromise.all = function (promiseArr) {
+  return new MyPromise((resolve, reject) => {
+    const resultArr = [];
+    let resultCount = 0;
+
+    function checkAndResolve() {
+      resultCount++;
+      if (promiseArr.length === resultCount) {
+        resolve(resultArr);
+      }
+    }
+
+    if (Array.isArray(promiseArr)) {
+      promiseArr.forEach((onePromise, index) => {
+        if (onePromise instanceof MyPromise) {
+          onePromise
+            .then((data) => {
+              resultArr[index] = data;
+              checkAndResolve();
+            })
+            .catch((err) => {
+              reject(err);
+            });
+        } else {
+          resultArr[index] = onePromise;
+          checkAndResolve();
+        }
+      });
+    } else {
+      reject(new Error(`${promiseArr} is not iterable `));
+    }
+  });
 };
 
 export default MyPromise;

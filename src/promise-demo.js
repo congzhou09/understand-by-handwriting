@@ -3,23 +3,67 @@ import MyPromise from "./tools/my-promise";
 const FinalPromise = MyPromise;
 // const FinalPromise = Promise;
 
-const onePrmis = new FinalPromise((resolve, reject) => {
-  setTimeout(() => {
-    resolve("999");
-  }, 3000);
+/* basic usage */
+(function basicUsage() {
+  const onePrmis = new FinalPromise((resolve, reject) => {
+    setTimeout(() => {
+      resolve("999");
+    }, 3000);
+  });
 
-  // resolve(
-  //   new FinalPromise((resolveInner) => {
-  //     setTimeout(resolveInner, 3000);
-  //   })
-  // );
+  onePrmis
+    .then(() => {
+      console.log("wawa");
+      return "oo";
+    })
+    .then((data) => {
+      console.log(data);
+    });
 });
 
-onePrmis
-  .then(() => {
-    console.log("wawa");
-    return "oo";
-  })
-  .then((data) => {
+(function basicUsageTwo() {
+  const onePrmis = new FinalPromise((resolve, reject) => {
+    resolve(
+      new FinalPromise((resolveInner) => {
+        setTimeout(resolveInner, 3000);
+      })
+    );
+  });
+
+  onePrmis
+    .then(() => {
+      console.log("wawa");
+      return "oo";
+    })
+    .then((data) => {
+      console.log(data);
+    });
+});
+
+/* Promise.resolve() */
+(function promiseResolve() {
+  FinalPromise.resolve(3).then((data) => {
     console.log(data);
   });
+});
+
+(function promiseAll() {
+  const promise1 = new FinalPromise((resolve, reject) => {
+    setTimeout(() => {
+      resolve("promise1");
+    }, 1000);
+  });
+  const promise2 = new FinalPromise((resolve, reject) => {
+    setTimeout(() => {
+      resolve("promise2");
+    }, 2000);
+  });
+  FinalPromise.all([promise1, promise2, "promise3"])
+  // FinalPromise.all()
+    .then((data) => {
+      console.log(data);
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+})();
