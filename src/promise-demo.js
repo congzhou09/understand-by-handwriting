@@ -42,10 +42,28 @@ const FinalPromise = MyPromise;
 
 /* Promise.resolve() */
 (function promiseResolve() {
-  FinalPromise.resolve(3).then((data) => {
-    console.log(data);
+  const promise1 = new FinalPromise((resolve, reject) => {
+    setTimeout(() => {
+      reject("promise1");
+    }, 1000);
   });
-});
+
+  FinalPromise.resolve(promise1)
+    .then((data) => {
+      console.log(data);
+    })
+    .catch((err) => {
+      console.error(err);
+      throw new Error("just test");
+    })
+    .catch((err) => {
+      console.error("2", err);
+    });
+
+  // FinalPromise.resolve(3).then((data) => {
+  //   console.log(data);
+  // });
+})();
 
 (function promiseAll() {
   const promise1 = new FinalPromise((resolve, reject) => {
@@ -59,11 +77,11 @@ const FinalPromise = MyPromise;
     }, 2000);
   });
   FinalPromise.all([promise1, promise2, "promise3"])
-  // FinalPromise.all()
+    // FinalPromise.all()
     .then((data) => {
       console.log(data);
     })
     .catch((err) => {
       console.error(err);
     });
-})();
+});

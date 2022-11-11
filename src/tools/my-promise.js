@@ -5,81 +5,104 @@ const PROMISE_STATUS = {
 };
 
 function MyPromise(promiseFun) {
-  this.status = PROMISE_STATUS.pending;
-  this.resolvedFun = null;
-  this.rejectedFun = null;
-  this.resolvedRet = null;
-  this.rejectedRet = null;
+  // resolver must be a function
+  if (typeof promiseFun !== "function") {
+    throw new Error("Promise resolver is not a function");
+  } else {
+    this.status = PROMISE_STATUS.pending;
+    this.resolvedFun = null;
+    this.rejectedFun = null;
+    this.resolvedRet = null;
+    this.rejectedRet = null;
+    this._upperPromise = null; // 使链式then的每个层级reject都能调用到catch回调
 
-  const _this = this;
+    const _this = this;
 
-  function resolve(resolvedRet) {
-    if (resolvedRet instanceof MyPromise) {
-      // 如果resolve传入的是个Promise对象
-      const thisResolve = resolve.bind(_this);
-      const thisReject = reject.bind(_this);
-      resolvedRet
-        .then(function (data) {
-          thisResolve(data);
-        })
-        .catch(function (err) {
-          thisReject(err);
-        });
-    } else {
-      this.resolvedRet = resolvedRet;
-      this.resolvedFun && this.resolvedFun(this.resolvedRet); // 调resolve的时候可能还没调过then
-      this.status = PROMISE_STATUS.fulfilled;
+    function resolve(resolvedRet) {
+      if (resolvedRet instanceof MyPromise) {
+        // 如果resolve传入的是个Promise对象
+        const thisResolve = resolve.bind(_this);
+        const thisReject = reject.bind(_this);
+        resolvedRet
+          .then(function (data) {
+            thisResolve(data);
+          })
+          .catch(function (err) {
+            thisReject(err);
+          });
+      } else {
+        this.resolvedRet = resolvedRet;
+        this.resolvedFun && this.resolvedFun(this.resolvedRet); // 调resolve的时候可能还没调过then
+        this.status = PROMISE_STATUS.fulfilled;
+      }
     }
-  }
-  function reject(rejectedRet) {
-    this.rejectedRet = rejectedRet;
-    this.rejectedFun && this.rejectedFun(this.rejectedRet);
-    this.status = PROMISE_STATUS.rejected;
-  }
+    function reject(rejectedRet) {
+      this.rejectedRet = rejectedRet;
+      this.rejectedFun && this.rejectedFun(this.rejectedRet);
+      this.status = PROMISE_STATUS.rejected;
+    }
 
-  promiseFun && promiseFun(resolve.bind(this), reject.bind(this));
+    promiseFun && promiseFun(resolve.bind(this), reject.bind(this));
+  }
 }
 
 MyPromise.prototype.then = function (resolvedFun, rejectedFun) {
-  const _this = this;
-  return new MyPromise(function (resolve, reject) {
-    const finalResolvedFun = function () {
-      resolvedFun && resolve(resolvedFun(_this.resolvedRet));
-    };
-    const finalRejectedFun = function () {
+  const retPromise = new MyPromise((resolve, reject) => {
+    // 调then的时候可能还没调过resolve
+    if (this.status === PROMISE_STATUS.fulfilled) {
+      if (resolvedFun) {
+        resolve(resolvedFun(this.resolvedRet));
+      } else {
+        resolve(this.resolvedRet);
+      }
+    } else if (this.status === PROMISE_STATUS.rejected) {
       if (rejectedFun) {
-        reject(rejectedFun(_this.rejectedRet));
+        reject(rejectedFun(this.rejectedRet));
       } else {
-        reject(_this.rejectedRet);
+        reject(this.rejectedRet);
       }
-    };
-    try {
-      // 调then的时候可能还没调过resolve
-      if (_this.status === PROMISE_STATUS.fulfilled) {
-        finalResolvedFun();
-      } else if (_this.status === PROMISE_STATUS.rejected) {
-        finalRejectedFun();
-      } else {
-        _this.resolvedFun = finalResolvedFun;
-      }
-    } catch (error) {
-      reject(error);
+    } else {
+      this.resolvedFun = resolvedFun;
+      this.rejectedFun = rejectedFun;
     }
   });
+
+  retPromise._upperPromise = this;
+
+  return retPromise;
 };
 
 MyPromise.prototype.catch = function (rejectedFun) {
-  if (this.status === PROMISE_STATUS.rejected) {
-    rejectedFun && rejectedFun(this.rejectedRet);
-  } else {
-    this.rejectedFun = rejectedFun;
-  }
+  const retPromise = new MyPromise((resolve, reject) => {
+    const finalRejectedFun = function (value) {
+      try {
+        resolve(rejectedFun && rejectedFun(value));
+      } catch (err) {
+        reject(err);
+      }
+    };
+    if (this.status === PROMISE_STATUS.rejected) {
+      finalRejectedFun(this.rejectedRet);
+    } else {
+      this.rejectedFun = finalRejectedFun;
+      let upperPromise = this._upperPromise;
+      while (upperPromise != null) {
+        upperPromise.rejectedFun = finalRejectedFun;
+        upperPromise = upperPromise._upperPromise;
+      }
+    }
+  });
+  return retPromise;
 };
 
 MyPromise.resolve = function (value) {
-  return new MyPromise((resolve) => {
-    resolve(value);
-  });
+  if (value instanceof MyPromise) {
+    return value;
+  } else {
+    return new MyPromise((resolve) => {
+      resolve(value);
+    });
+  }
 };
 
 MyPromise.all = function (promiseArr) {
