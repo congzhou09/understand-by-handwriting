@@ -1,3 +1,8 @@
+import { requestHostCallback } from "../scheduler";
+
+const requestCallback = requestHostCallback;
+// const requestCallback = requestIdleCallback;
+
 const TEXT_ELEMENT = "TEXT ELEMENT";
 
 /**
@@ -28,9 +33,9 @@ function render(element, parentDom) {
   rootFiber = {
     dom: parentDom, // rootFiber["dom"] is already existed
     props: {
-      children: [element]
+      children: [element],
     },
-    alternate: prevRootFiber
+    alternate: prevRootFiber,
   };
   nextWorkUnit = rootFiber;
 }
@@ -49,7 +54,8 @@ function workLoop(idleDeadlineObj) {
   let shouldYield = false;
   while (nextWorkUnit && !shouldYield) {
     nextWorkUnit = performWorkUnit(nextWorkUnit);
-    shouldYield = idleDeadlineObj.timeRemaining() < 1;
+    const timeRemain = idleDeadlineObj.timeRemaining();
+    shouldYield = timeRemain < 1;
   }
   if (!nextWorkUnit) {
     if (rootFiber) {
@@ -62,7 +68,7 @@ function workLoop(idleDeadlineObj) {
     }
   }
 
-  requestIdleCallback(workLoop);
+  requestCallback(workLoop);
 }
 
 function performWorkUnit(fiber) {
@@ -105,7 +111,7 @@ function commitRootFiber() {
   /**
    * delection fibers will not be included in new root fiber traverse
    * **/
-  [...deletions].forEach(oneFiber => {
+  [...deletions].forEach((oneFiber) => {
     performCommit(oneFiber);
     oneFiber = null;
   });
@@ -158,7 +164,7 @@ function performCommit(fiber) {
  * child, sibling, child's parent sibling.
  * **/
 
-requestIdleCallback(workLoop);
+requestCallback(workLoop);
 
 function reconcile(parentFiber, elements) {
   /**
@@ -179,7 +185,7 @@ function reconcile(parentFiber, elements) {
         props: element.props,
         parent: parentFiber,
         alternate: null,
-        effectTag: "ADD"
+        effectTag: "ADD",
       };
     } else if (element == null) {
       // delete
@@ -193,7 +199,7 @@ function reconcile(parentFiber, elements) {
         props: element.props,
         parent: parentFiber,
         alternate: prevFiber,
-        effectTag: "UPDATE"
+        effectTag: "UPDATE",
       };
     } else {
       // replace
@@ -203,7 +209,7 @@ function reconcile(parentFiber, elements) {
         props: element.props,
         parent: parentFiber,
         alternate: prevFiber,
-        effectTag: "REPLACE"
+        effectTag: "REPLACE",
       };
     }
 
@@ -238,13 +244,13 @@ function createDom(fiber) {
 }
 
 function updateDomProperties(dom, prevProps, nextProps) {
-  const isEvent = name => name.startsWith("on");
-  const isAttribute = name => !isEvent(name) && name != "children";
+  const isEvent = (name) => name.startsWith("on");
+  const isAttribute = (name) => !isEvent(name) && name != "children";
 
   // Remove event listeners
   Object.keys(prevProps)
     .filter(isEvent)
-    .forEach(name => {
+    .forEach((name) => {
       const eventType = name.toLowerCase().substring(2);
       dom.removeEventListener(eventType, prevProps[name]);
     });
@@ -252,7 +258,7 @@ function updateDomProperties(dom, prevProps, nextProps) {
   // Add event listeners
   Object.keys(nextProps)
     .filter(isEvent)
-    .forEach(name => {
+    .forEach((name) => {
       const eventType = name.toLowerCase().substring(2);
       dom.addEventListener(eventType, nextProps[name]);
     });
@@ -280,11 +286,11 @@ function createElement(type, config, ...rawChildren) {
       ...config,
       children: []
         .concat(...rawChildren) //存在的[Array(n)]情况
-        .filter(child => child != null && child !== false)
-        .map(child =>
+        .filter((child) => child != null && child !== false)
+        .map((child) =>
           child instanceof Object ? child : createTextElement(child)
-        )
-    }
+        ),
+    },
   };
 }
 
@@ -314,5 +320,5 @@ function createComponentInstance(fiber) {
 export default {
   render,
   createElement,
-  Component
+  Component,
 };
