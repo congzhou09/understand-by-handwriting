@@ -1,7 +1,7 @@
 import { requestHostCallback } from "../scheduler";
 
-const requestCallback = requestHostCallback;
-// const requestCallback = requestIdleCallback;
+// const requestCallback = requestHostCallback;
+const requestCallback = requestIdleCallback;
 
 const TEXT_ELEMENT = "TEXT ELEMENT";
 

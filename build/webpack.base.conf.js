@@ -13,12 +13,17 @@ module.exports = {
   context: resolve("."),
   entry: {
     app: "./src/main.js",
-    fiberFeature: "./src/react_demo/fiber_feature.js"
+    fiberFeature: "./src/react_demo/fiber_feature.js",
   },
   output: {
     publicPath: baseConfig.urlPrefix,
     path: resolve("dist"),
     filename: "static/js/[name]-[hash].js",
+  },
+  resolve: {
+    alias: {
+      tools: resolve("src/tools"),
+    },
   },
   optimization: {
     runtimeChunk: "single", //将webpack的runtime单独提取到一个chunk，且被多个入口共用

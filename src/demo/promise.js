@@ -1,4 +1,4 @@
-import MyPromise from "./tools/my-promise";
+import MyPromise from "../tools/my-promise";
 
 const FinalPromise = MyPromise;
 // const FinalPromise = Promise;
