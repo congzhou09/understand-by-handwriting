@@ -1,6 +1,6 @@
-// import Didact from "./didact";
-import Didact from "./didact/index_with_fiber.js";
-import "./style/use_didact2.css";
+// import Didact from "lib/react/didact";
+import Didact from "lib/react/didact/index_with_fiber.js";
+import "./index.css";
 
 /** @jsx Didact.createElement */
 const rootDom = document.getElementById("app");
@@ -24,14 +24,18 @@ function getOneGame(gameName, likesIndex) {
   );
 }
 
-Didact.render(
-  <div>
-    <h1>Game Ranking List</h1>
-    <ul>
-      {games.map((game, index) => {
-        return getOneGame(game, index);
-      })}
-    </ul>
-  </div>,
-  rootDom
-);
+function render() {
+  Didact.render(
+    <div>
+      <h1>Game Ranking List</h1>
+      <ul>
+        {games.map((game, index) => {
+          return getOneGame(game, index);
+        })}
+      </ul>
+    </div>,
+    rootDom
+  );
+}
+
+render();

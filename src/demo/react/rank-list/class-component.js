@@ -1,6 +1,6 @@
-// import Didact from "./didact";
-import Didact from "./didact/index_with_fiber";
-import "./style/use_didact2.css";
+// import Didact from "lib/react/didact";
+import Didact from "lib/react/didact/index_with_fiber";
+import "./index.css";
 
 /** @jsx Didact.createElement */
 const rootDom = document.getElementById("app");
@@ -35,7 +35,6 @@ class Game extends Didact.Component {
     this.likeFun = this.like.bind(this);
   }
   like(e) {
-    console.log(e);
     this.setState({
       likes: this.state.likes + 1,
     });
@@ -52,4 +51,5 @@ class Game extends Didact.Component {
     );
   }
 }
+
 Didact.render(<App />, rootDom);

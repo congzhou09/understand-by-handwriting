@@ -1,6 +1,6 @@
-import "./react_demo/use_didact";
-// import "./react_demo/use_didact2";
-// import "./react_demo/use_didact2_with_component";
+// import "./demo/react/show-time";
+import "./demo/react/rank-list";
+
 // import "./vdom-diff";
 
 // import "./tools-playground";

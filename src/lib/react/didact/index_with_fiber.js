@@ -327,6 +327,7 @@ class Component {
     this.state = Object.assign({}, this.state, partialState);
     nextWorkUnit = this._fiber;
     updateFiber = this._fiber;
+    requestCallback(workLoop);
   }
 }
 
