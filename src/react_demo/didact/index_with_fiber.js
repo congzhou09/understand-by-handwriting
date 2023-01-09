@@ -1,14 +1,14 @@
 import { requestHostCallback } from "../scheduler";
 
-// const requestCallback = requestHostCallback;
-const requestCallback = requestIdleCallback;
+const requestCallback = requestHostCallback;
+// const requestCallback = requestIdleCallback;
 
 const TEXT_ELEMENT = "TEXT ELEMENT";
 
 /**
  * fiber's structure of an React element
  * {
- *   dom: the element's domNode,
+ *   stateNode: the element's domNode,
  *   props: // the element's props
  *     {
  *       ...: the element's configs,
@@ -19,7 +19,7 @@ const TEXT_ELEMENT = "TEXT ELEMENT";
  *   parent: the element's parent fiber,
  *   sibling: the element's sibling fiber,
  *   alternate: previous fiber at the element's same position,
- *   effectTag: mark the element's DOM change to be committed
+ *   effectTag: mark the element's DOM change to be committed, called "flag" since 16.14
  * }
  *
  * **/
@@ -31,13 +31,15 @@ function render(element, parentDom) {
    * so several properties are undefined.
    * **/
   rootFiber = {
-    dom: parentDom, // rootFiber["dom"] is already existed
+    stateNode: parentDom, // rootFiber["stateNode"] is already existed
     props: {
       children: [element],
     },
     alternate: prevRootFiber,
   };
   nextWorkUnit = rootFiber;
+
+  requestCallback(workLoop);
 }
 
 let rootFiber = null; // work-in-progress root
@@ -47,16 +49,25 @@ let deletions = new Set();
 /**
  *  "deletions" stores fibers to be deleted when commit, use Set to replace Array because
  *  when debugging in a situation of render() being invoked continuously, "nextWorkUnit" is always not null
- *  and commitRootFiber() will not be invoked, "DELETE" condition in reconcile() may always be matched.
+ *  and commitRootFiber() will not be invoked, "DELETE" condition in reconcileChildren() may always be matched.
  **/
 let updateFiber = null;
 function workLoop(idleDeadlineObj) {
   let shouldYield = false;
+
+  // render phase (includes: fiber creatation, diff)
   while (nextWorkUnit && !shouldYield) {
     nextWorkUnit = performWorkUnit(nextWorkUnit);
-    const timeRemain = idleDeadlineObj.timeRemaining();
-    shouldYield = timeRemain < 1;
+    if (idleDeadlineObj.didTimeout === true) {
+      shouldYield = true;
+    }
+    if (typeof idleDeadlineObj.timeRemaining === "function") {
+      const timeRemain = idleDeadlineObj.timeRemaining();
+      shouldYield = timeRemain < 1;
+    }
   }
+
+  // commit phase
   if (!nextWorkUnit) {
     if (rootFiber) {
       commitRootFiber(); // commit rootFiber to the real DOM
@@ -66,41 +77,55 @@ function workLoop(idleDeadlineObj) {
       performCommit(updateFiber);
       updateFiber = null;
     }
+  } else {
+    // schedule remaining render phase
+    requestCallback(workLoop);
   }
-
-  requestCallback(workLoop);
 }
 
-function performWorkUnit(fiber) {
-  const isComponent = typeof fiber.type === "function";
+/**
+ * fiber is used to organize the units of work, each unit is
+ * called a fiber and is relevant to a element node, and all
+ * units of work form a fiber tree.
+ *
+ * For the convenience of getting the next unit of work, a
+ * fiber stores its parent fiber, its first child fiber, and
+ * its sibling fiber. Sequence of getting next unit is: first
+ * child, sibling, child's parent sibling.
+ * **/
+function performWorkUnit(workInProgress) {
+  const isComponent = typeof workInProgress.type === "function";
   if (isComponent) {
-    if (!fiber.component) {
-      fiber.component = createComponentInstance(fiber);
+    if (!workInProgress.component) {
+      workInProgress.component = createComponentInstance(workInProgress);
     }
-    const elements = [fiber.component.render()];
-    reconcile(fiber, elements);
+    const nextChildren = [workInProgress.component.render()];
+    reconcileChildren(workInProgress, nextChildren);
   } else {
     // create current fiber dom
-    if (!fiber.dom) {
-      fiber.dom = createDom(fiber);
+    if (!workInProgress.stateNode) {
+      workInProgress.stateNode = createDom(workInProgress);
     }
 
-    // reconcile this fiber's all children in the first depth
-    const elements = fiber.props.children;
-    reconcile(fiber, elements);
+    // reconcileChildren this fiber's all children in the first depth
+    const nextChildren = workInProgress.props.children;
+    reconcileChildren(workInProgress, nextChildren);
   }
 
-  // return next work unit fiber
-  if (fiber.child) {
-    return fiber.child;
+  // child deep
+  if (workInProgress.child) {
+    return workInProgress.child;
   }
 
-  let nextFiber = fiber;
+  let nextFiber = workInProgress;
 
   while (nextFiber) {
+    // sibling child deep
     if (nextFiber.sibling) {
       return nextFiber.sibling;
     }
+
+    // parent
     nextFiber = nextFiber.parent;
   }
 
@@ -133,18 +158,18 @@ function performCommit(fiber) {
     return;
   }
   let parentForDom = fiber.parent;
-  while (parentForDom && parentForDom.dom == null) {
+  while (parentForDom && parentForDom.stateNode == null) {
     parentForDom = parentForDom.parent;
   }
-  let parentDom = parentForDom.dom;
-  if (fiber.effectTag === "ADD" && fiber.dom != null) {
-    parentDom.appendChild(fiber.dom);
+  let parentDom = parentForDom.stateNode;
+  if (fiber.effectTag === "ADD" && fiber.stateNode != null) {
+    parentDom.appendChild(fiber.stateNode);
   } else if (fiber.effectTag === "DELETE") {
-    parentDom.removeChild(fiber.dom);
+    parentDom.removeChild(fiber.stateNode);
   } else if (fiber.effectTag === "UPDATE") {
-    updateDomProperties(fiber.dom, fiber.alternate.props, fiber.props);
+    updateDomProperties(fiber.stateNode, fiber.alternate.props, fiber.props);
   } else if (fiber.effectTag === "REPLACE") {
-    parentDom.replaceChild(fiber.dom, fiber.alternate.dom);
+    parentDom.replaceChild(fiber.stateNode, fiber.alternate.stateNode);
   }
 
   fiber.alternate = fiber;
@@ -153,76 +178,71 @@ function performCommit(fiber) {
   performCommit(fiber.sibling);
 }
 
-/**
- * fiber is used to organize the units of work, each unit is
- * called a fiber and is relevant to a element node, and all
- * units of work form a fiber tree.
- *
- * For the convenience of getting the next unit of work, a
- * fiber stores its parent fiber, its first child fiber, and
- * its sibling fiber. Sequence of getting next unit is: first
- * child, sibling, child's parent sibling.
- * **/
-
-requestCallback(workLoop);
-
-function reconcile(parentFiber, elements) {
+function reconcileChildren(workInProgress, nextChildren) {
   /**
-   * prevFiber is the child of the previous parentFiber,
-   * and elements will produce the child of the current parentFiber.
+   * currentFirstChild is the child of the previous fiberNode,
+   * and nextChildren will produce the children fiberNode of the workInProgress.
    * **/
-  let prevFiber = parentFiber.alternate && parentFiber.alternate.child;
+  const currentFirstChild =
+    workInProgress.alternate && workInProgress.alternate.child;
+
+  let currentChildFiberNode = currentFirstChild;
   let fiberMark = null;
-  for (let index = 0; index < elements.length || prevFiber != null; index++) {
-    const element = elements[index];
+
+  for (
+    let index = 0;
+    index < nextChildren.length || currentChildFiberNode != null;
+    index++
+  ) {
+    const element = nextChildren[index];
     let oneFiber = null;
 
-    if (prevFiber == null) {
+    if (currentChildFiberNode == null) {
       // add
       oneFiber = {
-        dom: null,
+        stateNode: null,
         type: element.type,
         props: element.props,
-        parent: parentFiber,
+        parent: workInProgress,
         alternate: null,
         effectTag: "ADD",
       };
     } else if (element == null) {
       // delete
-      prevFiber.effectTag = "DELETE";
-      deletions.add(prevFiber);
-    } else if (prevFiber.type === element.type) {
+      currentChildFiberNode.effectTag = "DELETE";
+      deletions.add(currentChildFiberNode);
+    } else if (currentChildFiberNode.type === element.type) {
       // update
       oneFiber = {
-        dom: prevFiber.dom,
-        type: prevFiber.type,
+        stateNode: currentChildFiberNode.stateNode,
+        type: currentChildFiberNode.type,
         props: element.props,
-        parent: parentFiber,
-        alternate: prevFiber,
+        parent: workInProgress,
+        alternate: currentChildFiberNode,
         effectTag: "UPDATE",
       };
     } else {
       // replace
       oneFiber = {
-        dom: null,
+        stateNode: null,
         type: element.type,
         props: element.props,
-        parent: parentFiber,
-        alternate: prevFiber,
+        parent: workInProgress,
+        alternate: currentChildFiberNode,
         effectTag: "REPLACE",
       };
     }
 
     /**
-     * traverse of the parentFiber.alternate: child...->sibling...,
-     * the same order with fibers constructed from elements
+     * traverse of the current fiber tree layer: ...->sibling...,
+     * the same order with fibers constructed from nextChildren
      * **/
-    if (prevFiber) {
-      prevFiber = prevFiber.sibling;
+    if (currentChildFiberNode) {
+      currentChildFiberNode = currentChildFiberNode.sibling;
     }
 
     if (index === 0) {
-      parentFiber.child = oneFiber;
+      workInProgress.child = oneFiber;
     } else {
       fiberMark.sibling = oneFiber;
     }

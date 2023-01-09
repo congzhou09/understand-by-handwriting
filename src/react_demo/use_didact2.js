@@ -24,18 +24,14 @@ function getOneGame(gameName, likesIndex) {
   );
 }
 
-function render() {
-  Didact.render(
-    <div>
-      <h1>Game Ranking List</h1>
-      <ul>
-        {games.map((game, index) => {
-          return getOneGame(game, index);
-        })}
-      </ul>
-    </div>,
-    rootDom
-  );
-}
-
-render();
+Didact.render(
+  <div>
+    <h1>Game Ranking List</h1>
+    <ul>
+      {games.map((game, index) => {
+        return getOneGame(game, index);
+      })}
+    </ul>
+  </div>,
+  rootDom
+);
