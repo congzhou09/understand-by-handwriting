@@ -9,5 +9,5 @@ module.exports = {
       },
     ],
   ],
-  plugins: ["@babel/plugin-transform-react-jsx"],
+  plugins: [["@babel/plugin-transform-react-jsx", { runtime: "automatic" }]],
 };

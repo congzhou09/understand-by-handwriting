@@ -17,8 +17,7 @@ const newNodes = [
 
 function diffReact(oldNodes = [], newNodes = []) {
   const oldNodeMap = oldNodes.reduce((theMap, value, index) => {
-    theMap[value.key] = value;
-    value.index = index;
+    theMap[value.key] = index;
     return theMap;
   }, {});
 
@@ -26,7 +25,7 @@ function diffReact(oldNodes = [], newNodes = []) {
 
   newNodes.forEach((newNode, index) => {
     const curKey = newNode.key;
-    const oldIndex = oldNodeMap[curKey]?.["index"];
+    const oldIndex = oldNodeMap[curKey];
     if (oldIndex != void 0) {
       if (index === oldIndex) {
         updateArr.push({ key: curKey, effect: EFFECT_TYPE.update });
@@ -60,8 +59,7 @@ function diffReact(oldNodes = [], newNodes = []) {
 
 function diffVue(oldNodes = [], newNodes = []) {
   const oldNodeMap = oldNodes.reduce((theMap, value, index) => {
-    theMap[value.key] = value;
-    value.index = index;
+    theMap[value.key] = index;
     return theMap;
   }, {});
 
@@ -78,9 +76,9 @@ function diffVue(oldNodes = [], newNodes = []) {
   const updateArr = [];
 
   while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
-    if (oldStartNode === null) {
+    if (oldStartNode == null) {
       oldStartNode = oldNodes[++oldStartIndex];
-    } else if (oldEndNode === null) {
+    } else if (oldEndNode == null) {
       oldEndNode = oldNodes[--oldEndIndex];
     } else if (oldStartNode.key === newStartNode.key) {
       updateArr.push({ key: oldStartNode.key, effect: EFFECT_TYPE.update });
@@ -107,14 +105,14 @@ function diffVue(oldNodes = [], newNodes = []) {
       oldEndNode = oldNodes[--oldEndIndex];
       newStartNode = newNodes[++newStartIndex];
     } else {
-      const newInOldNode = oldNodeMap[newStartNode.key];
-      if (newInOldNode) {
+      const newInOldNodeIndex = oldNodeMap[newStartNode.key];
+      if (newInOldNodeIndex) {
         updateArr.push({
           key: newStartNode.key,
           effect: EFFECT_TYPE.moveAndUpdate,
           newIndex: newStartIndex,
         });
-        oldNodes[newInOldNode.index] = null;
+        oldNodes[newInOldNodeIndex] = null;
       } else {
         updateArr.push({
           key: newStartNode.key,
