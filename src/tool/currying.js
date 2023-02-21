@@ -1,18 +1,18 @@
 function currying() {
   if (arguments.length < 1) {
-    throw new Error(`Function name param is needed.`);
+    throw new Error(`At least one function is needed as the first param.`);
   }
-  const fun = arguments[0];
+  const theFun = arguments[0];
   let params = Array.prototype.slice.call(arguments, 1);
-  if (params.length >= fun.length) {
-    return fun(...params);
+  if (params.length >= theFun.length) {
+    return theFun(...params);
   }
 
   function getNextCurriedFun() {
     return function () {
       params = Array.prototype.concat.apply(params, arguments);
-      if (params.length >= fun.length) {
-        return fun(...params);
+      if (params.length >= theFun.length) {
+        return theFun(...params);
       } else {
         return getNextCurriedFun();
       }
