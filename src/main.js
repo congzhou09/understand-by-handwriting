@@ -7,6 +7,9 @@
 
 // import "./demo/debounce";
 
-import "./demo/currying";
+// import "./demo/currying";
 
 // import "./demo/use-previous";
+
+import "./demo/compose";
+
