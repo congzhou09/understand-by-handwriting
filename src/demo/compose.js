@@ -1,4 +1,4 @@
-import MyCompose from "../tool/my-compose";
+import MyCompose from '../tool/my-compose';
 
 const middlewareArr = [];
 const dataArr = [];
