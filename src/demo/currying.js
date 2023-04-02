@@ -1,4 +1,4 @@
-import currying from "../tool/currying";
+import currying from '../tool/currying';
 
 function add(left, right) {
   return left + right;
