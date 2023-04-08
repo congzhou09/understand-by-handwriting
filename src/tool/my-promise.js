@@ -1,13 +1,13 @@
 const PROMISE_STATUS = {
-  pending: "pending",
-  fulfilled: "fulfilled",
-  rejected: "rejected",
+  pending: 'pending',
+  fulfilled: 'fulfilled',
+  rejected: 'rejected',
 };
 
 function MyPromise(promiseFun) {
   // resolver must be a function
-  if (typeof promiseFun !== "function") {
-    throw new Error("Promise resolver is not a function");
+  if (typeof promiseFun !== 'function') {
+    throw new Error('Promise resolver is not a function');
   } else {
     this.status = PROMISE_STATUS.pending;
     this.resolvedFun = null;
