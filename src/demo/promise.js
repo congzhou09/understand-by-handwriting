@@ -1,4 +1,4 @@
-import MyPromise from "../tools/my-promise";
+import MyPromise from '../tool/my-promise';
 
 const FinalPromise = MyPromise;
 // const FinalPromise = Promise;
@@ -7,14 +7,14 @@ const FinalPromise = MyPromise;
 (function basicUsage() {
   const onePrmis = new FinalPromise((resolve, reject) => {
     setTimeout(() => {
-      resolve("999");
+      resolve('999');
     }, 3000);
   });
 
   onePrmis
     .then(() => {
-      console.log("wawa");
-      return "oo";
+      console.log('wawa');
+      return 'oo';
     })
     .then((data) => {
       console.log(data);
@@ -26,14 +26,14 @@ const FinalPromise = MyPromise;
     resolve(
       new FinalPromise((resolveInner) => {
         setTimeout(resolveInner, 3000);
-      })
+      }),
     );
   });
 
   onePrmis
     .then(() => {
-      console.log("wawa");
-      return "oo";
+      console.log('wawa');
+      return 'oo';
     })
     .then((data) => {
       console.log(data);
@@ -44,7 +44,8 @@ const FinalPromise = MyPromise;
 (function promiseResolve() {
   const promise1 = new FinalPromise((resolve, reject) => {
     setTimeout(() => {
-      reject("promise1");
+      resolve('promise1');
+      // reject('promise1');
     }, 1000);
   });
 
@@ -54,10 +55,10 @@ const FinalPromise = MyPromise;
     })
     .catch((err) => {
       console.error(err);
-      throw new Error("just test");
+      throw new Error('just test');
     })
     .catch((err) => {
-      console.error("2", err);
+      console.error('2', err);
     });
 
   // FinalPromise.resolve(3).then((data) => {
@@ -68,15 +69,15 @@ const FinalPromise = MyPromise;
 (function promiseAll() {
   const promise1 = new FinalPromise((resolve, reject) => {
     setTimeout(() => {
-      resolve("promise1");
+      resolve('promise1');
     }, 1000);
   });
   const promise2 = new FinalPromise((resolve, reject) => {
     setTimeout(() => {
-      resolve("promise2");
+      resolve('promise2');
     }, 2000);
   });
-  FinalPromise.all([promise1, promise2, "promise3"])
+  FinalPromise.all([promise1, promise2, 'promise3'])
     // FinalPromise.all()
     .then((data) => {
       console.log(data);

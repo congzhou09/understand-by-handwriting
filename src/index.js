@@ -3,7 +3,7 @@
 
 // import "./demo/vdom-diff";
 
-// import "./demo/promise";
+import './demo/promise';
 
 // import "./demo/debounce";
 
@@ -13,4 +13,4 @@
 
 // import './demo/compose';
 
-import './demo/cipher';
+// import './demo/cipher';

@@ -18,7 +18,7 @@ function MyPromise(promiseFun) {
 
     const _this = this;
 
-    function resolve(resolvedRet) {
+    const resolve = (resolvedRet) => {
       if (resolvedRet instanceof MyPromise) {
         // 如果resolve传入的是个Promise对象
         const thisResolve = resolve.bind(_this);
@@ -35,14 +35,14 @@ function MyPromise(promiseFun) {
         this.resolvedFun && this.resolvedFun(this.resolvedRet); // 调resolve的时候可能还没调过then
         this.status = PROMISE_STATUS.fulfilled;
       }
-    }
-    function reject(rejectedRet) {
+    };
+    const reject = (rejectedRet) => {
       this.rejectedRet = rejectedRet;
       this.rejectedFun && this.rejectedFun(this.rejectedRet);
       this.status = PROMISE_STATUS.rejected;
-    }
+    };
 
-    promiseFun && promiseFun(resolve.bind(this), reject.bind(this));
+    promiseFun && promiseFun(resolve, reject);
   }
 }
 
