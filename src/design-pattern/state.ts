@@ -1,7 +1,15 @@
-interface PlayerState {
-  getName: () => string; // state name
-  next: () => void; // switch to next song
-  playOrPause: () => void;
+abstract class PlayerState {
+  protected stateEnum: STATE_NAME;
+  protected player: MusicPlayer;
+  constructor(player) {
+    this.player = player;
+  }
+  getName() {
+    // state name
+    return this.stateEnum.toString();
+  }
+  abstract next(): void; // switch to next song
+  abstract playOrPause(): void;
 }
 
 enum STATE_NAME {
@@ -10,10 +18,10 @@ enum STATE_NAME {
   STOPPED = 'stopped',
 }
 
-class PausedState implements PlayerState {
-  private player: MusicPlayer;
+class PausedState extends PlayerState {
   constructor(player) {
-    this.player = player;
+    super(player);
+    this.stateEnum = STATE_NAME.PAUSED;
   }
   next() {
     // console.log('stop playing');
@@ -24,15 +32,12 @@ class PausedState implements PlayerState {
     // console.log('restore playing');
     this.player.changeState(STATE_NAME.PLAYING);
   }
-  getName() {
-    return STATE_NAME.PAUSED.toString();
-  }
 }
 
-class StoppedState implements PlayerState {
-  private player: MusicPlayer;
+class StoppedState extends PlayerState {
   constructor(player) {
-    this.player = player;
+    super(player);
+    this.stateEnum = STATE_NAME.STOPPED;
   }
   next() {
     this.player.nextSong();
@@ -41,15 +46,12 @@ class StoppedState implements PlayerState {
     // console.log('start playing');
     this.player.changeState(STATE_NAME.PLAYING);
   }
-  getName() {
-    return STATE_NAME.STOPPED.toString();
-  }
 }
 
-class PlayingState implements PlayerState {
-  private player: MusicPlayer;
+class PlayingState extends PlayerState {
   constructor(player) {
-    this.player = player;
+    super(player);
+    this.stateEnum = STATE_NAME.PLAYING;
   }
   next() {
     this.player.changeState(STATE_NAME.STOPPED);
@@ -59,9 +61,6 @@ class PlayingState implements PlayerState {
   playOrPause() {
     // console.log('pause playing');
     this.player.changeState(STATE_NAME.PAUSED);
-  }
-  getName() {
-    return STATE_NAME.PLAYING.toString();
   }
 }
 
