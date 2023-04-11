@@ -1,5 +1,5 @@
 interface Implementor {
-  operate: () => void;
+  operate(): void;
 }
 
 class ImplementorA implements Implementor {
@@ -24,11 +24,8 @@ class Abstraction {
   }
 }
 
-const impA = new ImplementorA();
-const impB = new ImplementorB();
-
-const abstA = new Abstraction(impA);
-const abstB = new Abstraction(impB);
+const abstA = new Abstraction(new ImplementorA());
+const abstB = new Abstraction(new ImplementorB());
 
 abstA.operate();
 abstB.operate();

@@ -45,4 +45,4 @@ bluePen.operate();
 
 console.log(`flyweightMap keys array: `, FlyweightFactory.getFlywightMapKeys());
 
-export {};
+export {}; // If don't contain at least 1 import or export statement, the file is considered as global and may lead to name clashing
