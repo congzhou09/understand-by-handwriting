@@ -20,3 +20,5 @@ class ProxySubject implements Subject {
 
 const proxySubject = new ProxySubject();
 console.log(proxySubject.request());
+
+export {};

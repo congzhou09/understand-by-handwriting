@@ -44,3 +44,5 @@ redPencil.operate();
 bluePen.operate();
 
 console.log(`flyweightMap keys array: `, FlyweightFactory.getFlywightMapKeys());
+
+export {};
