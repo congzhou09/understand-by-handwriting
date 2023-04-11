@@ -1,4 +1,5 @@
 // import '../design-pattern/strategy';
 // import '../design-pattern/flyweight';
 // import '../design-pattern/bridge';
-import '../design-pattern/template';
+// import '../design-pattern/template-method';
+import '../design-pattern/chain-of-responsibility';
