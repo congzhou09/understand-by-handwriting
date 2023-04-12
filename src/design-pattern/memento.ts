@@ -15,7 +15,7 @@ class CareTaker {
   addMemento(memo: Memento) {
     this.mementoList.push(memo);
   }
-  getMemento(index: number) {
+  getMemento(index?: number) {
     if (index == undefined) {
       return this.mementoList.pop();
     } else {
@@ -46,10 +46,14 @@ class Originator {
 
 const originator = new Originator();
 const careTaker = new CareTaker();
-originator.display();
 careTaker.addMemento(originator.createMemento());
 originator.operate();
+careTaker.addMemento(originator.createMemento());
 originator.operate();
+originator.display();
+
+console.log(`-------------start restore---------`);
+originator.setMemento(careTaker.getMemento());
 originator.display();
 originator.setMemento(careTaker.getMemento(0));
 originator.display();
