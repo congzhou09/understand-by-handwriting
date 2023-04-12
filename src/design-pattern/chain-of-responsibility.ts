@@ -3,10 +3,7 @@ abstract class Handler {
   setSuccessor(handler) {
     this.successor = handler;
   }
-  getSuccessor() {
-    return this.successor;
-  }
-  protected passToSuccessor(reqData) {
+  protected next(reqData) {
     if (this.successor != undefined) {
       this.successor.handle(reqData);
     }
@@ -17,14 +14,14 @@ abstract class Handler {
 class HandlerA extends Handler {
   handle(reqData) {
     console.log(`handlerA handle "${reqData}"`);
-    this.passToSuccessor(reqData);
+    this.next(reqData);
   }
 }
 
 class HandlerB extends Handler {
   handle(reqData) {
     console.log(`handlerB handle "${reqData}"`);
-    this.passToSuccessor(reqData);
+    this.next(reqData);
   }
 }
 
