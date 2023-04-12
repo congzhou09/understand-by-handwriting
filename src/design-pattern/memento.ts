@@ -34,7 +34,10 @@ class Originator {
     return new Memento(this.state);
   }
   setMemento(memo: Memento) {
-    this.state = memo.getState();
+    const historyState = memo.getState();
+    if (historyState != undefined) {
+      this.state = historyState;
+    }
   }
   operate() {
     this.state++;
@@ -52,7 +55,7 @@ careTaker.addMemento(originator.createMemento());
 originator.operate();
 originator.display();
 
-console.log(`-------------start restore---------`);
+console.log(`-------------start restoration---------`);
 originator.setMemento(careTaker.getMemento());
 originator.display();
 originator.setMemento(careTaker.getMemento(0));
