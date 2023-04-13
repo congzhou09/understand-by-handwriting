@@ -5,4 +5,5 @@
 // import '../design-pattern/chain-of-responsibility';
 // import '../design-pattern/command';
 // import '../design-pattern/memento';
-import '../design-pattern/mediator';
+// import '../design-pattern/mediator';
+import '../design-pattern/visitor';
