@@ -4,4 +4,5 @@
 // import '../design-pattern/template-method';
 // import '../design-pattern/chain-of-responsibility';
 // import '../design-pattern/command';
-import '../design-pattern/memento';
+// import '../design-pattern/memento';
+import '../design-pattern/mediator';
