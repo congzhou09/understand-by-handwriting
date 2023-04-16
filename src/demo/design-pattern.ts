@@ -6,4 +6,5 @@
 // import '../design-pattern/command';
 // import '../design-pattern/memento';
 // import '../design-pattern/mediator';
-import '../design-pattern/visitor';
+// import '../design-pattern/visitor';
+import '../design-pattern/interpreter';
