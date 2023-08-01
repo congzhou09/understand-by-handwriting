@@ -1,6 +1,6 @@
-import { useState } from "react";
-import ReactDom from "react-dom";
-import usePrevious from "../tool/use-previous";
+import { useState } from 'react';
+import ReactDom from 'react-dom';
+import usePrevious from '../tool/hook/use-previous';
 
 const App = () => {
   const [valueOne, setValueOne] = useState(0);
@@ -21,4 +21,4 @@ const App = () => {
   );
 };
 
-ReactDom.render(<App />, document.getElementById("app"));
+ReactDom.render(<App />, document.getElementById('app'));

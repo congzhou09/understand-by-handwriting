@@ -15,4 +15,5 @@
 
 // import './demo/cipher';
 
-import './demo/design-pattern';
+// import './demo/design-pattern';
+import './demo/use-effect';
