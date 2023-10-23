@@ -21,6 +21,6 @@
   },
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.12.12",
-    "brick-cli-base": "^1.2.4"
+    "brick-cli-base": "1.2.6"
   }
 }
