@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
-const useUpdateEffect: typeof useEffect = (effectFun, deps) => {
+const useUpdateEffect: typeof useEffect = (effectFun: React.EffectCallback, deps?: React.DependencyList) => {
   const hasMounted = useRef(false);
   useEffect(() => {
     return () => {
