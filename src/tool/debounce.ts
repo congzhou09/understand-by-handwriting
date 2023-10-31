@@ -1,7 +1,7 @@
 const funTimerMapHead = new Map();
 const funTimerMapTail = new Map();
 
-export function debounce(fun, wait = 0, { heading = false } = {}) {
+function debounce(fun, wait = 0, { heading = false } = {}) {
   return function (...args: unknown[]) {
     // eslint-disable-next-line
     const ctx = this;
@@ -32,3 +32,5 @@ export function debounce(fun, wait = 0, { heading = false } = {}) {
     }
   };
 }
+
+export default debounce;
