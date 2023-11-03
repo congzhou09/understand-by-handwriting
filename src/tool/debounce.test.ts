@@ -41,7 +41,7 @@ describe('debounce-test', () => {
 
   it('debounce-head', () => {
     oneVal = 0;
-    const addValDebounced = debounce(addVal, 100, { heading: true });
+    const addValDebounced = debounce(addVal, 100, { leading: true });
     let timerCount = 0;
     const timer = setInterval(() => {
       addValDebounced();
