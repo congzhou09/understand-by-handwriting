@@ -2,28 +2,25 @@ import { MinHeap } from './min-heap';
 
 describe('test min-heap', () => {
   it('create', () => {
-    const oneMinHeap = new MinHeap<number>();
-    oneMinHeap.create([5, 7, 6, 3, 4, 1]);
-    expect(oneMinHeap.stringify()).toEqual(`[1,4,3,7,5,6]`);
+    const oneMinHeap = new MinHeap<number>([5, 7, 6, 3, 4, 1]);
+    expect(oneMinHeap.stringify()).toEqual(`[1,3,5,7,4,6]`);
   });
 
   it('push', () => {
-    const oneMinHeap = new MinHeap<number>();
-    oneMinHeap.create([5, 7, 6, 3, 4, 1]);
+    const oneMinHeap = new MinHeap<number>([5, 7, 6, 3, 4, 1]);
     oneMinHeap.push(2);
-    expect(oneMinHeap.stringify()).toEqual(`[1,4,2,7,5,6,3]`);
+    expect(oneMinHeap.stringify()).toEqual(`[1,3,2,7,4,6,5]`);
     oneMinHeap.push(2);
-    expect(oneMinHeap.stringify()).toEqual(`[1,2,2,4,5,6,3,7]`);
+    expect(oneMinHeap.stringify()).toEqual(`[1,2,2,3,4,6,5,7]`);
   });
 
   it('pop', () => {
-    const oneMinHeap = new MinHeap<number>();
-    oneMinHeap.create([5, 7, 6, 3, 4, 1]);
+    const oneMinHeap = new MinHeap<number>([5, 7, 6, 3, 4, 1]);
     let min = oneMinHeap.pop();
     expect(min).toEqual(1);
-    expect(oneMinHeap.stringify()).toEqual(`[3,4,6,7,5]`);
+    expect(oneMinHeap.stringify()).toEqual(`[3,4,5,7,6]`);
     min = oneMinHeap.pop();
     expect(min).toEqual(3);
-    expect(oneMinHeap.stringify()).toEqual(`[4,5,6,7]`);
+    expect(oneMinHeap.stringify()).toEqual(`[4,6,5,7]`);
   });
 });

@@ -3,17 +3,15 @@ export class MinHeap<T> {
     if (compareFun) {
       this._compareFun = compareFun;
     }
+    this._build();
   }
 
   get length() {
     return this._heap.length;
   }
 
-  create(heapNodes: Array<T>) {
-    this._heap.length = 0;
-    heapNodes.forEach((one) => {
-      this.push(one);
-    });
+  get lastTreeRootIndex() {
+    return Math.floor((this.length - 1 - 1) / 2);
   }
 
   push(oneNode: T) {
@@ -37,6 +35,15 @@ export class MinHeap<T> {
     console.log(this.stringify());
   }
 
+  private _build() {
+    if (!this.length) return;
+    let index = this.lastTreeRootIndex;
+    while (index >= 0) {
+      this._siftDown(index);
+      index--;
+    }
+  }
+
   private _siftUp(i: number) {
     let index = i;
     while (index > 0) {
@@ -52,7 +59,7 @@ export class MinHeap<T> {
 
   private _siftDown(i: number) {
     let index = i;
-    const maxIndex = Math.floor((this.length - 2) / 2);
+    const maxIndex = this.lastTreeRootIndex;
     while (index <= maxIndex) {
       const leftIndex = index * 2 + 1;
       const rightIndex = index * 2 + 2;
